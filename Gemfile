@@ -31,6 +31,23 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+  gem 'rspec-rails', '~> 6.1'
+  gem 'factory_bot_rails', '~> 6.4'
+  gem 'faker', '~> 3.2'
+
+  # Debugging
+  gem 'pry-rails'
+  gem 'pry-byebug'
+end
+
+group :test do
+  # Database cleaner for test isolation
+  gem 'database_cleaner-active_record', '~> 2.1'
+
+  # For testing JSON responses
+  gem 'shoulda-matchers', '~> 6.0'
 end
 
 
+
+gem "dotenv", "~> 3.1"

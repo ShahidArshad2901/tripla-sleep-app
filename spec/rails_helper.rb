@@ -52,6 +52,26 @@ RSpec.configure do |config|
       example.run
     end
   end
+
+  config.before(:suite) do
+    DatabaseCleaner.clean_with(:truncation)
+    DatabaseCleaner.strategy = :transaction
+  end
+
+  config.before(:each) do
+    DatabaseCleaner.start
+  end
+
+  config.after(:each) do
+    DatabaseCleaner.clean
+  end
+
+  # For request specs, we need truncation strategy
+  config.around(:each, type: :request) do |example|
+    DatabaseCleaner.strategy = :truncation
+    example.run
+    DatabaseCleaner.strategy = :transaction
+  end
 end
 
 # Shoulda Matchers configuration

@@ -11,7 +11,7 @@ class SleepRecord < ApplicationRecord
   scope :from_past_week, -> { where("started_at >= ?", 1.week.ago) }
 
   # Callbacks
-  before_save :calculate_duration, if: :ended_at?
+  before_save :calculate_duration
 
   private
 
@@ -24,6 +24,10 @@ class SleepRecord < ApplicationRecord
   end
 
   def calculate_duration
-    self.duration = (ended_at - started_at).to_i if started_at && ended_at
+    if started_at && ended_at
+      self.duration = (ended_at - started_at).to_i
+    else
+      self.duration = nil
+    end
   end
 end

@@ -1,9 +1,16 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Create sample users
+user1 = User.create!(name: "John Doe")
+user2 = User.create!(name: "Jane Smith")
+user3 = User.create!(name: "Bob Johnson")
+
+# Create some sleep records
+user1.sleep_records.create!(started_at: 1.day.ago.at_beginning_of_day + 22.hours, ended_at: Time.current.at_beginning_of_day + 6.hours)
+user2.sleep_records.create!(started_at: 2.days.ago.at_beginning_of_day + 23.hours, ended_at: 1.day.ago.at_beginning_of_day + 7.hours)
+user3.sleep_records.create!(started_at: 8.hours.ago) # Ongoing
+
+# Create follow relationships
+Follow.create!(follower: user1, following: user2)
+Follow.create!(follower: user1, following: user3)
+
+puts "Seed data created!"
+puts "User IDs: #{User.pluck(:id, :name)}"

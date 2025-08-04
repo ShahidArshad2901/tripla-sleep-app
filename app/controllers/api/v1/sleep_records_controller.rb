@@ -10,7 +10,10 @@ module Api
 
       def clock_in
         # Close any ongoing sleep sessions
-        @user.sleep_records.ongoing.update_all(ended_at: Time.current)
+        ongoing_records = @user.sleep_records.ongoing
+        ongoing_records.each do |record|
+          record.update!(ended_at: Time.current)
+        end
 
         # Create new sleep session
         @user.sleep_records.create!(started_at: Time.current)
@@ -32,27 +35,13 @@ module Api
           .order(duration: :desc)
           .includes(:user)
 
-        render json: format_following_sleep_records(sleep_records)
+        render json: sleep_records, each_serializer: FollowingSleepRecordSerializer
       end
 
       private
 
       def set_user
         @user = User.find(params[:user_id])
-      end
-
-      def format_following_sleep_records(records)
-        records.map do |record|
-          {
-            id: record.id,
-            user_id: record.user_id,
-            user_name: record.user.name,
-            started_at: record.started_at,
-            ended_at: record.ended_at,
-            duration: record.duration,
-            created_at: record.created_at
-          }
-        end
       end
     end
   end

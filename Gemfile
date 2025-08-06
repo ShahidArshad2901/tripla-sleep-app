@@ -5,8 +5,10 @@ gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"
 gem "tzinfo-data", platforms: %i[ mswin mswin64 mingw x64_mingw jruby ]
 gem "bootsnap", require: false
-gem 'active_model_serializers', '~> 0.10.14'
+gem "active_model_serializers", "~> 0.10.14"
 gem "dotenv", "~> 3.1"
+gem "kaminari"
+gem "rack-attack"
 
 
 group :development, :test do
@@ -31,4 +33,3 @@ group :test do
   # For testing JSON responses
   gem "shoulda-matchers", "~> 6.0"
 end
-

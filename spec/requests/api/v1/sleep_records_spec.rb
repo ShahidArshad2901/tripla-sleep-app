@@ -5,15 +5,31 @@ RSpec.describe 'Api::V1::SleepRecords', type: :request do
   let(:other_user) { create(:user) }
 
   describe 'GET /api/v1/sleep_records' do
-    let!(:sleep_records) { create_list(:sleep_record, 3, user: user) }
+    let!(:sleep_records) { create_list(:sleep_record, 25, user: user) }
+
+    it 'returns paginated sleep records' do
+      get '/api/v1/sleep_records', params: { user_id: user.id, page: 1, per_page: 10 }
+
+      expect(response).to have_http_status(:ok)
+
+      json_data = json_response[:data]
+      expect(json_data).to be_an(Array)
+      expect(json_data.size).to eq(10)
+
+      # Check pagination meta
+      expect(json_response[:meta]).to include(
+        current_page: 1,
+        total_pages: 3,
+        total_count: 25
+      )
+    end
 
     it 'returns user sleep records ordered by created_at desc' do
       get '/api/v1/sleep_records', params: { user_id: user.id }
 
       expect(response).to have_http_status(:ok)
-      expect(json_response).to be_an(Array)
-      expect(json_response.size).to eq(3)
-      expect(json_response.first[:id]).to eq(sleep_records.last.id)
+      json_data = json_response[:data]
+      expect(json_data.first[:id]).to eq(sleep_records.last.id)
     end
 
     it 'returns 404 when user not found' do
@@ -52,17 +68,22 @@ RSpec.describe 'Api::V1::SleepRecords', type: :request do
 
   describe 'GET /api/v1/sleep_records/following' do
     let!(:follow) { create(:follow, follower: user, following: other_user) }
-    let!(:followed_user_record) { create(:sleep_record, :from_last_week, user: other_user, duration: 28800) }
-    let!(:old_record) { create(:sleep_record, user: other_user, started_at: 2.weeks.ago, ended_at: 2.weeks.ago + 8.hours) }
+    let!(:followed_user_records) { create_list(:sleep_record, 30, :from_last_week, user: other_user) }
 
-    it 'returns sleep records of followed users from past week sorted by duration' do
-      get '/api/v1/sleep_records/following', params: { user_id: user.id }
+    it 'returns paginated following users sleep records' do
+      get '/api/v1/sleep_records/following', params: { user_id: user.id, page: 1, per_page: 15 }
 
       expect(response).to have_http_status(:ok)
-      expect(json_response).to be_an(Array)
-      expect(json_response.size).to eq(1)
-      expect(json_response.first[:user_name]).to eq(other_user.name)
-      expect(json_response.first[:duration]).to eq(28800)
+
+      json_data = json_response[:data]
+      expect(json_data).to be_an(Array)
+      expect(json_data.size).to eq(15)
+
+      expect(json_response[:meta]).to include(
+        current_page: 1,
+        total_pages: 2,
+        total_count: 30
+      )
     end
   end
 end

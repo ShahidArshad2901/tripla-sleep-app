@@ -3,13 +3,21 @@ module Api
     class SleepRecordsController < BaseController
       before_action :set_user, only: [ :index, :clock_in ]
 
+      # GET /api/v1/sleep_records
       def index
         sleep_records = @user.sleep_records
                              .with_user
                              .order(created_at: :desc)
-                             .limit(100) # Prevent loading too many records
+                             .page(page_params[:page])
+                             .per(page_params[:per_page])
 
-        render json: sleep_records
+        render json: {
+          data: ActiveModelSerializers::SerializableResource.new(
+            sleep_records,
+            each_serializer: SleepRecordSerializer
+          ).as_json,
+          meta: pagination_meta(sleep_records)
+        }
       end
 
       def clock_in
@@ -34,9 +42,16 @@ module Api
         user = User.find(params[:user_id])
 
         sleep_records = SleepRecord.following_records_for_user(user)
-                                   .limit(50) # Prevent too large responses
+                                   .page(page_params[:page])
+                                   .per(page_params[:per_page])
 
-        render json: sleep_records, each_serializer: FollowingSleepRecordSerializer
+        render json: {
+          data: ActiveModelSerializers::SerializableResource.new(
+            sleep_records,
+            each_serializer: FollowingSleepRecordSerializer
+          ).as_json,
+          meta: pagination_meta(sleep_records)
+        }
       end
 
       private

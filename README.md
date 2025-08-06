@@ -157,6 +157,27 @@ Returns sleep records from all followed users from the past week, sorted by dura
 ]
 ```
 
+### Pagination
+
+All list endpoints support pagination:
+
+**Parameters:**
+- `page` (optional): Page number (default: 1)
+- `per_page` (optional): Items per page (default: 20, max: 100)
+
+**Response includes meta:**
+```json
+{
+  "data": [...],
+  "meta": {
+    "current_page": 1,
+    "next_page": 2,
+    "prev_page": null,
+    "total_pages": 5,
+    "total_count": 95
+  }
+}
+
 ## Error Responses
 
 ### 404 Not Found

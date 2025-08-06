@@ -9,9 +9,21 @@ class SleepRecord < ApplicationRecord
   scope :completed, -> { where.not(ended_at: nil) }
   scope :ongoing, -> { where(ended_at: nil) }
   scope :from_past_week, -> { where("started_at >= ?", 1.week.ago) }
+  scope :ordered_by_duration, -> { order(duration: :desc) }
+  scope :with_user, -> { includes(:user) }
 
   # Callbacks
   before_save :calculate_duration
+
+  # Class methods for optimized queries
+  def self.following_records_for_user(user)
+    joins(:user)
+      .where(user: user.following)
+      .from_past_week
+      .completed
+      .ordered_by_duration
+      .with_user
+  end
 
   private
 

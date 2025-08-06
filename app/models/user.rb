@@ -11,4 +11,12 @@ class User < ApplicationRecord
 
   # Validations
   validates :name, presence: true
+
+  def current_sleep_session
+    sleep_records.ongoing.first
+  end
+
+  def following?(other_user)
+    following.exists?(other_user.id)
+  end
 end

@@ -35,14 +35,6 @@ rails server
 The API will be available at http://localhost:3000
 
 
-## Run migrations and tests
-```
-rails db:migrate
-```
-```
-bundle exec rspec
-```
-
 ## API Documentation
 Base URL
 ```
@@ -166,7 +158,8 @@ All list endpoints support pagination:
 - `per_page` (optional): Items per page (default: 20, max: 100)
 
 **Response includes meta:**
-```json
+
+```
 {
   "data": [...],
   "meta": {
@@ -177,7 +170,7 @@ All list endpoints support pagination:
     "total_count": 95
   }
 }
-
+```
 ## Error Responses
 
 ### 404 Not Found
@@ -195,12 +188,86 @@ All list endpoints support pagination:
 }
 ```
 
+
+## Key Assumptions & Design Decisions
+
+### Business Logic Assumptions
+
+1. **Clock-In Behavior**
+   - When a user clocks in while having an ongoing sleep session, the system automatically closes the previous session
+   - This prevents overlapping sleep records and handles cases where users forget to "clock out"
+   - Sleep duration is calculated and stored when a session ends for query performance
+
+2. **Sleep Session Definition**
+   - A sleep session starts with a "clock in" (going to bed) and ends when the user clocks in again (waking up and starting a new day)
+   - Sessions can span multiple days (e.g., sleeping from 11 PM to 7 AM)
+   - There's no explicit "clock out" - the next clock in ends the previous session
+
+3. **Following Records Time Frame**
+   - "Previous week" means the last 7 days from the current date (rolling window)
+   - Only completed sleep sessions are shown (ongoing sessions are excluded)
+   - Records are sorted by duration in descending order (longest sleep first)
+
+4. **User Identification**
+   - No authentication is implemented as per requirements
+   - Users are identified only by their ID in request parameters
+   - In a production system, this would need proper authentication
+
+5. **API Response Limits**
+   - Paginated responses default to 20 items per page (max 100)
+   - Following sleep records are limited to prevent massive responses
+   - Recent sleep records on clock-in show only the last 10 entries
+
+### Technical Decisions
+
+1. **Database Choice**
+   - PostgreSQL for reliable concurrent operations and excellent timestamp handling
+   - Indexes added on foreign keys and commonly queried fields for performance
+
+2. **No Background Jobs**
+   - Duration calculation happens synchronously on save
+   - In a high-traffic system, this could be moved to background processing
+
+3. **Caching Strategy**
+   - Currently using in-memory caching for rate limiting only
+   - Database queries are optimized with includes() to prevent N+1
+   - Redis could be added for caching frequently accessed data
+
+4. **Error Handling**
+   - All errors return consistent JSON responses
+   - 404 for not found resources
+   - 422 for validation errors
+   - 429 for rate limit exceeded
+
+5. **Time Zones**
+   - All timestamps are stored and returned in UTC
+   - Client applications should handle timezone conversion
+
+## Scalability Considerations
+
+1. **Database Performance**
+   - Composite indexes on (user_id, started_at) for efficient filtering
+   - Pagination prevents loading large datasets
+   - Duration is pre-calculated and indexed
+
+2. **API Rate Limiting**
+   - 100 requests per 5 minutes per IP (general)
+   - 10 clock-ins per hour per user (prevent abuse)
+   - Uses in-memory store (could upgrade to Redis)
+
+3. **Future Enhancements**
+   - Add caching layer for following users' sleep records
+   - Implement database read replicas for scaling reads
+   - Add background job processing for heavy computations
+   - Consider GraphQL for more efficient data fetching
+
 ## Performance Considerations
 
 1. Database Indexes: Added indexes on foreign keys and commonly queried fields
 2. Query Optimization: Uses includes to prevent N+1 queries
 3. Response Limits: API responses are limited to prevent large payloads
 4. Transaction Safety: Clock-in operations are wrapped in transactions
+
 
 ## Testing
 ### Run the test suite:
